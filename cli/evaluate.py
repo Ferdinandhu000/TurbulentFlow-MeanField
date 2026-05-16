@@ -1,0 +1,106 @@
+import argparse
+import os
+import sys
+from typing import List, Tuple, Dict, Any
+import yaml
+
+# Ensure the project root is on PYTHONPATH when running as a script
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+from model import FLRONetFNO, FLRONetAFNO, FLRONetUNet, FLRONetMLP, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver
+from cfd.dataset import CFDDataset
+from common.training import CheckpointLoader
+from worker import Predictor
+
+
+def main(config: Dict[str, Any]) -> None:
+    """
+    Main function to evaluate a trained FLRONet on test dataset.
+
+    Parameters:
+        config (Dict[str, Any]): Configuration dictionary.
+    """
+
+    # Parse CLI arguments:
+    init_sensor_timeframes: List[int]           = list(config['dataset']['init_sensor_timeframes'])
+    future_prediction_range: List[int] | None   = config['dataset'].get('future_prediction_range')
+    n_fullstate_timeframes_per_chunk: int       = int(config['dataset']['n_fullstate_timeframes_per_chunk'])
+    n_samplings_per_chunk: int                  = int(config['dataset']['n_samplings_per_chunk'])
+    resolution: tuple                           = tuple(config['dataset']['resolution'])
+    n_sensors: int                              = int(config['dataset']['n_sensors'])
+    sensor_generator: str                       = str(config['dataset']['sensor_generator'])
+    embedding_generator: str                    = str(config['dataset']['embedding_generator'])
+    is_load_sensor_pos: bool                    = bool(config['evaluate'].get('is_load_sensor_pos', True))
+    sensor_position_path: str                   = str(config['evaluate'].get('sensor_position_path', 'sensor_position_pt/pos.pt'))
+
+    if is_load_sensor_pos:
+        seed: int = int(config['dataset'].get('seed', 0))
+        print(f"\n[*] evaluate.py: Using fixed sensor positions from {sensor_position_path}.")
+    else:
+        import random
+        seed = random.randint(0, 1000000)
+        print(f"\n[*] evaluate.py: Forcing random seed {seed} to randomly select Test sensors.")
+
+    write_to_disk: bool                         = True
+    n_dropout_sensors: int                      = int(config['evaluate']['n_dropout_sensors'])
+    noise_level: float                          = float(config['evaluate']['noise_level'])
+    init_fullstate_timeframes: List[int] | None  = config['evaluate']['init_fullstate_timeframes']
+    is_generate_plots: bool                     = bool(config['evaluate'].get('is_generate_plots', False))
+    from_checkpoint: str                        = str(config['evaluate']['from_checkpoint'])
+
+    # Load the model
+    checkpoint_loader = CheckpointLoader(checkpoint_path=from_checkpoint)
+    net: FLRONetFNO | FLRONetAFNO | FLRONetUNet | FLRONetMLP | FNO3D | FLRONetTransolver | FNO | AFNO | Transolver = checkpoint_loader.load(scope=globals())
+
+    if isinstance(net, FNO3D):
+        init_fullstate_timeframes: List[int] = list(range(min(init_sensor_timeframes), max(init_sensor_timeframes) + 1))
+        n_fullstate_timeframes_per_chunk: int = len(init_fullstate_timeframes)
+
+    # Instatiate the training datasets
+    if n_dropout_sensors == 0:
+        implied_dropout_probabilities: List[float] = []
+    else:
+        implied_dropout_probabilities: List[float] = [0.] * n_dropout_sensors
+        implied_dropout_probabilities[-1] = 1.
+
+    dataset = CFDDataset(
+        root='./data/test', 
+        init_sensor_timeframes=init_sensor_timeframes,
+        future_prediction_range=future_prediction_range,
+        n_fullstate_timeframes_per_chunk=n_fullstate_timeframes_per_chunk,
+        n_samplings_per_chunk=n_samplings_per_chunk,
+        resolution=resolution,
+        n_sensors=n_sensors,
+        dropout_probabilities=implied_dropout_probabilities,
+        noise_level=noise_level,
+        sensor_generator=sensor_generator, 
+        embedding_generator=embedding_generator,
+        init_fullstate_timeframes=init_fullstate_timeframes,
+        seed=seed,
+        write_to_disk=write_to_disk,
+        sensor_position_path=sensor_position_path if is_load_sensor_pos else None,
+    )
+    
+    # Make prediction
+    print(f'Using: {from_checkpoint}')
+    predictor = Predictor(net=net)
+    avg_metrics: Tuple[float, float, float] = predictor.predict_from_dataset(
+        dataset,
+        is_generate_plots=is_generate_plots,
+    )
+    print(avg_metrics)
+
+
+if __name__ == "__main__":
+    # Initialize the argument parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, required=True, help='Configuration file name.')
+    args: argparse.Namespace = parser.parse_args()
+    # Load the configuration
+    with open(file=args.config, mode='r', encoding='utf-8') as f:
+        config: Dict[str, Any] = yaml.safe_load(f)
+
+    # Run the main function with the configuration
+    main(config)
