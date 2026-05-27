@@ -2,7 +2,7 @@ import argparse
 from typing import Tuple, List, Dict, Any
 import yaml
 
-from model import FLRONetFNO, FLRONetAFNO, FLRONetUNet, FLRONetMLP, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver
+from model import FLRONetFNO, FLRONetAFNO, FLRONetUNet, FLRONetMLP, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver, UNet
 from common.training import CheckpointLoader
 from worker import Predictor
 
@@ -30,7 +30,7 @@ def main(config: Dict[str, Any]) -> None:
     # Load the model
     print(f'Using: {from_checkpoint}')
     checkpoint_loader = CheckpointLoader(checkpoint_path=from_checkpoint)
-    net: FLRONetFNO | FLRONetAFNO | FLRONetUNet | FLRONetMLP | FNO3D | FLRONetTransolver | FNO | AFNO | Transolver = checkpoint_loader.load(scope=globals())
+    net: FLRONetFNO | FLRONetAFNO | FLRONetUNet | FLRONetMLP | FNO3D | FLRONetTransolver | FNO | AFNO | Transolver | UNet = checkpoint_loader.load(scope=globals())
     
     # Make prediction
     predictor = Predictor(net=net)
@@ -47,7 +47,7 @@ def main(config: Dict[str, Any]) -> None:
         n_dropout_sensors=n_dropout_sensors,
         noise_level=noise_level,
         in_resolution=trained_resolution,
-        out_resolution=out_resolution if isinstance(net, (FLRONetFNO, FLRONetAFNO, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver)) else None,
+        out_resolution=out_resolution if isinstance(net, (FLRONetFNO, FLRONetAFNO, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver, UNet)) else None,
     )
 
     total_params = sum(p.numel() for p in net.parameters())

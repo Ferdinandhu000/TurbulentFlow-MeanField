@@ -11,7 +11,7 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
-from model import FLRONetFNO, FLRONetAFNO, FLRONetUNet, FLRONetMLP, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver
+from model import FLRONetFNO, FLRONetAFNO, FLRONetUNet, FLRONetMLP, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver, UNet
 from cfd.dataset import CFDDataset
 from common.training import CheckpointLoader
 from worker import Trainer
@@ -55,7 +55,8 @@ def main(config: Dict[str, Any], checkpoint_path: str = '.checkpoints', logfile:
     blur_sigma: float                           = float(config['architecture'].get('blur_sigma', 2.0))
     is_TC: bool                                 = bool(config['architecture'].get('is_TC', True))
     is_cross_attn: bool                         = bool(config['architecture'].get('is_cross_attn', False))
-    use_mean_field: bool                        = bool(config['architecture'].get('use_mean_field', True))
+    _umf = config['architecture'].get('use_mean_field', 'operator')
+    use_mean_field: str                         = ('operator' if _umf is True else 'none' if _umf is False else str(_umf))
     mean_field_hidden: int                      = int(config['architecture'].get('mean_field_hidden', 32))
     mean_field_time_embed_dim: int              = int(config['architecture'].get('mean_field_time_embed_dim', 32))
 
@@ -95,7 +96,7 @@ def main(config: Dict[str, Any], checkpoint_path: str = '.checkpoints', logfile:
         write_to_disk=write_to_disk,
     )
     val_dataset = CFDDataset(
-        root='./data/test', 
+        root='./data/val', 
         init_sensor_timeframes=init_sensor_timeframes,
         future_prediction_range=future_prediction_range,
         n_fullstate_timeframes_per_chunk=n_fullstate_timeframes_per_chunk,
@@ -195,6 +196,19 @@ def main(config: Dict[str, Any], checkpoint_path: str = '.checkpoints', logfile:
                 use_mean_field=use_mean_field,
                 mean_field_hidden=mean_field_hidden,
                 mean_field_time_embed_dim=mean_field_time_embed_dim,
+            ).cuda()
+
+    elif model_name.lower() == 'unet':
+        # Model
+        if from_checkpoint is not None:
+            checkpoint_loader = CheckpointLoader(checkpoint_path=from_checkpoint)
+            net: UNet = checkpoint_loader.load(scope=globals()).cuda()
+            assert isinstance(net, UNet)
+        else:
+            net = UNet(
+                n_channels=n_channels,
+                embedding_dim=embedding_dim,
+                n_timeframes=len(init_sensor_timeframes),
             ).cuda()
 
     elif model_name.lower() == 'afno':

@@ -9,7 +9,7 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
-from model import FLRONetFNO, FLRONetAFNO, FLRONetUNet, FLRONetMLP, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver
+from model import FLRONetFNO, FLRONetAFNO, FLRONetUNet, FLRONetMLP, FNO3D, FLRONetTransolver, FNO, AFNO, Transolver, UNet
 from cfd.dataset import CFDDataset
 from common.training import CheckpointLoader
 from worker import Predictor
@@ -52,7 +52,7 @@ def main(config: Dict[str, Any]) -> None:
 
     # Load the model
     checkpoint_loader = CheckpointLoader(checkpoint_path=from_checkpoint)
-    net: FLRONetFNO | FLRONetAFNO | FLRONetUNet | FLRONetMLP | FNO3D | FLRONetTransolver | FNO | AFNO | Transolver = checkpoint_loader.load(scope=globals())
+    net: FLRONetFNO | FLRONetAFNO | FLRONetUNet | FLRONetMLP | FNO3D | FLRONetTransolver | FNO | AFNO | Transolver | UNet = checkpoint_loader.load(scope=globals())
 
     if isinstance(net, FNO3D):
         init_fullstate_timeframes: List[int] = list(range(min(init_sensor_timeframes), max(init_sensor_timeframes) + 1))
