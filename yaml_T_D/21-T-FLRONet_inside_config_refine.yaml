@@ -46,7 +46,7 @@ training:
   train_batch_size: 2
   val_batch_size: 2
   learning_rate: 1e-4
-  n_epochs: 100
+  n_epochs: 1
   patience: 10
   tolerance: 0.
   save_frequency: 1

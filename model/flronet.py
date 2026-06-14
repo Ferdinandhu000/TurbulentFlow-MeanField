@@ -181,7 +181,7 @@ class DePatchEmbed(nn.Module):
 class FNOBranchNet(nn.Module):
 
     def __init__(self, n_channels: int, n_fno_layers: int, n_hmodes: int, n_wmodes: int, embedding_dim: int, 
-                 resolution: Tuple[int, int] = (48, 128), n_timeframes: int = 5, is_afno: bool = False):
+                 resolution: Tuple[int, int] = (48, 128), n_timeframes: int = 5, is_afno: bool = False, is_TC: bool = True):
         super().__init__()
         self.n_channels: int = n_channels
         self.n_timeframes: int = n_timeframes
@@ -191,8 +191,9 @@ class FNOBranchNet(nn.Module):
         self.embedding_dim: int = embedding_dim
         self.resolution = resolution
         self.is_afno = is_afno
+        self.is_TC = is_TC
         
-        in_chans_total = n_timeframes * n_channels
+        in_chans_total = n_timeframes * n_channels if is_TC else n_channels
         
         # Determine patch size: should be divisor of H and W
         patch_size = (8, 8) if resolution[0] % 8 == 0 and resolution[1] % 8 == 0 else (resolution[0], resolution[1])
@@ -239,8 +240,11 @@ class FNOBranchNet(nn.Module):
         assert n_channels == self.n_channels
         assert in_timeframes == self.n_timeframes
         
-        # Merge T and C
-        flattened_sensor_value: torch.Tensor = sensor_values.flatten(start_dim=1, end_dim=2)  # (B, T*C, H, W)
+        # Merge Dimensions
+        if self.is_TC:
+            flattened_sensor_value: torch.Tensor = sensor_values.flatten(start_dim=1, end_dim=2)  # Merge T and C: (B, T*C, H, W)
+        else:
+            flattened_sensor_value: torch.Tensor = sensor_values.flatten(start_dim=0, end_dim=1)  # Merge B and T: (B*T, C, H, W)
         
         # embedding
         if self.is_afno:
@@ -276,7 +280,10 @@ class FNOBranchNet(nn.Module):
             
         # Reshape back to (B, T, C, H, W)
         out_H, out_W = out_resolution
-        output = output.reshape(batch_size, self.n_timeframes, self.n_channels, out_H, out_W)
+        if self.is_TC:
+            output = output.reshape(batch_size, self.n_timeframes, self.n_channels, out_H, out_W)
+        else:
+            output = output.reshape(batch_size, self.n_timeframes, self.n_channels, out_H, out_W)  # B*T -> B, T handles natively by reshape
 
         return output
 
@@ -1000,7 +1007,7 @@ class FLRONetFNO(_BaseFLRONet):
         self,
         n_channels: int, n_fno_layers: int, n_hmodes: int, n_wmodes: int, 
         embedding_dim: int, n_stacked_networks: int, resolution: Tuple[int, int] = (48, 128),
-        is_cross_attn: bool = False, use_mean_field: str = 'operator',
+        is_TC: bool = True, is_cross_attn: bool = False, use_mean_field: str = 'operator',
         mean_field_hidden: int = 32, mean_field_time_embed_dim: int = 32,
     ):
         super().__init__(
@@ -1016,12 +1023,13 @@ class FLRONetFNO(_BaseFLRONet):
         self.n_hmodes: int = n_hmodes
         self.n_wmodes: int = n_wmodes
         self.resolution = resolution
+        self.is_TC = is_TC
 
         self.branch_nets = nn.ModuleList(
             modules=[
                 FNOBranchNet(
                     n_channels=n_channels, n_fno_layers=n_fno_layers, n_hmodes=n_hmodes, n_wmodes=n_wmodes, 
-                    embedding_dim=embedding_dim, resolution=resolution, is_afno=False,
+                    embedding_dim=embedding_dim, resolution=resolution, is_afno=False, is_TC=is_TC,
                 )
                 for _ in range(n_stacked_networks)
             ]

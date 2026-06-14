@@ -123,6 +123,7 @@ def main(config: Dict[str, Any], checkpoint_path: str = '.checkpoints', logfile:
                 n_channels=n_channels, n_fno_layers=n_fno_layers,
                 n_hmodes=n_hmodes, n_wmodes=n_wmodes, embedding_dim=embedding_dim,
                 n_stacked_networks=n_stacked_networks,
+                is_TC=is_TC,
                 is_cross_attn=is_cross_attn,
                 use_mean_field=use_mean_field,
                 mean_field_hidden=mean_field_hidden,
