@@ -12,8 +12,8 @@ dataset:
   write_to_disk: true # Set to false if tensors/ are already generated
 
 architecture:
-  momdel_name: 'flronet-afno'  # flronet-fno | flronet-afno | flronet-unet | flronet-mlp | flronet-transolver | fno3d | fno | afno | transolver | unet
-  is_cross_attn: true
+  momdel_name: 'transolver'  # flronet-fno | flronet-afno | flronet-unet | flronet-mlp | flronet-transolver | fno3d | fno | afno | transolver | unet
+  is_cross_attn: false
   # General configs:
   n_channels: 1   # fixed for 1d problems (e.g. 1-channel 48x128)
   embedding_dim: 64
@@ -32,7 +32,7 @@ architecture:
   # FLRONet-specific configs:
   n_stacked_networks: 2
 
-  use_mean_field: 'operator'  # operator | voronoi_output | branch_output | none
+  use_mean_field: none  # operator | voronoi_output | branch_output | none
   mean_field_hidden: 32          # MeanFieldNet CNN 隐藏通道数
   mean_field_time_embed_dim: 32  # 时间差正弦嵌入维度（Δt → softmax 权重）
 
@@ -52,12 +52,12 @@ training:
 
 evaluate:
   # from_checkpoint: 'best_fno3d/fno3d9.pt' 
-  from_checkpoint: 'checkpoints_best\.checkpoints_05-T-mean-operator_CATO_afno_inside_config\flronetafno16.pt'
+  from_checkpoint: 'checkpoints_best\.checkpoints_05-T-FLRONet_inside_config\flronetfno6.pt'
   # from_checkpoint: 'best_flronetmlp/flronetmlp12.pt'
   # from_checkpoint: 'bestd:\hj\Y-2 S-1\Programming Project\TurbulentFlowNet\sensor_position_pt_flronetunet/flronetunet16.pt'
   is_load_sensor_pos: true
   sensor_position_path: 'sensor_position_pt/pos_seed1.pt'
-  is_generate_plots: true
+  is_generate_plots: false
   n_dropout_sensors: 0
   noise_level: 0
   init_fullstate_timeframes: [17] # FLRONet-specific, set to null to randomly generate the fullstate frames with the same random seed at training 

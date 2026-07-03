@@ -12,8 +12,8 @@ dataset:
   write_to_disk: true # Set to false if tensors/ are already generated
 
 architecture:
-  momdel_name: 'flronet-afno'  # flronet-fno | flronet-afno | flronet-unet | flronet-mlp | flronet-transolver | fno3d | fno | afno | transolver | unet
-  is_cross_attn: true
+  momdel_name: 'fno'  # flronet-fno | flronet-afno | flronet-unet | flronet-mlp | flronet-transolver | fno3d | fno | afno | transolver | unet
+  is_cross_attn: false
   # General configs:
   n_channels: 1   # fixed for 1d problems (e.g. 1-channel 48x128)
   embedding_dim: 64
@@ -57,10 +57,10 @@ evaluate:
   # from_checkpoint: 'bestd:\hj\Y-2 S-1\Programming Project\TurbulentFlowNet\sensor_position_pt_flronetunet/flronetunet16.pt'
   is_load_sensor_pos: true
   sensor_position_path: 'sensor_position_pt/pos_seed1.pt'
-  is_generate_plots: true
+  is_generate_plots: false
   n_dropout_sensors: 0
   noise_level: 0
-  init_fullstate_timeframes: [17] # FLRONet-specific, set to null to randomly generate the fullstate frames with the same random seed at training 
+  init_fullstate_timeframes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19] # FLRONet-specific, set to null to randomly generate the fullstate frames with the same random seed at training 
 
 inference:
   # from_checkpoint: '.checkpoints_AFNO/afnonet3.pt'

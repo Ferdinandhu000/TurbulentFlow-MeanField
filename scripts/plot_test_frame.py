@@ -59,8 +59,9 @@ def plot_full_frame(
     sensor_positions: torch.Tensor | None = None,
 ) -> None:
     h, w = frame.shape[-2:]
-    figwidth = 8.0
+    figwidth = 18 / 25.4
     aspect_ratio = h / w
+
     fig, ax = plt.subplots(1, 1, figsize=(figwidth, figwidth * aspect_ratio))
     ax.imshow(
         frame.squeeze(0).cpu().numpy(),
@@ -81,10 +82,10 @@ def plot_full_frame(
             cmap="RdBu_r",
             vmin=vmin,
             vmax=vmax,
-            s=18,
+            s=0.5,
             marker="o",
             edgecolors="black",
-            linewidths=0.3,
+            linewidths=0.1,
         )
     ax.set_xticks([])
     ax.set_yticks([])
@@ -107,7 +108,7 @@ def plot_sensor_points(
     dpi: int,
 ) -> None:
     h, w = resolution
-    figwidth = 8.0
+    figwidth = 18 / 25.4
     aspect_ratio = h / w
     fig, ax = plt.subplots(1, 1, figsize=(figwidth, figwidth * aspect_ratio))
 
@@ -122,10 +123,10 @@ def plot_sensor_points(
         cmap="RdBu_r",
         vmin=vmin,
         vmax=vmax,
-        s=18,
+        s=0.5,
         marker="o",
         edgecolors="black",
-        linewidths=0.3,
+        linewidths=0.1,
     )
 
     ax.set_xlim(0, w - 1)
@@ -143,13 +144,13 @@ def plot_sensor_points(
 
 def main() -> None:
     resolution = (72, 192)
-    dpi = 600
+    dpi = 900
 
     root = ROOT_DIR
-    tensors_dir = os.path.join(root, "tensors", "train")
-    fullstate_path = os.path.join(tensors_dir, "fullstate_values", "fv_train_0_000120.pt")
+    tensors_dir = os.path.join(root, "tensors", "test")
+    fullstate_path = os.path.join(tensors_dir, "fullstate_values", "fv_test_0_000210.pt")
     sensor_pos_path = os.path.join(root, "sensor_position_pt", "pos_seed1.pt")
-    out_dir = os.path.join(root, "plots_test")
+    out_dir = os.path.join(root, "plots_paper")
 
     os.makedirs(out_dir, exist_ok=True)
 
@@ -178,30 +179,30 @@ def main() -> None:
     #     sensor_values=sensor_values,
     #     resolution=resolution,
     #     title="Sensor Values (Seed=1)",
-    #     out_path=os.path.join(out_dir, "sensor_points.png"),
+    #     out_path=os.path.join(out_dir, "s_test_200_sensor_points.png"),
     #     vmin=vmin,
     #     vmax=vmax,
     #     dpi=dpi,
+    # )
+
+    # plot_full_frame(
+    #     frame=voronoi_frame,
+    #     title="Voronoi Embedding (Seed=1)",
+    #     out_path=os.path.join(out_dir, "s_test_200_voronoi.png"),
+    #     vmin=vmin,
+    #     vmax=vmax,
+    #     dpi=dpi,
+    #     sensor_positions=sensor_positions,
     # )
 
     plot_full_frame(
-        frame=voronoi_frame,
-        title="Voronoi Embedding (Seed=1)",
-        out_path=os.path.join(out_dir, "120_voronoi.png"),
+        frame=fullstate,
+        title="Full State (First Frame)",
+        out_path=os.path.join(out_dir, "small_test_210_fullstate.png"),
         vmin=vmin,
         vmax=vmax,
         dpi=dpi,
-        sensor_positions=sensor_positions,
     )
-
-    # plot_full_frame(
-    #     frame=fullstate,
-    #     title="Full State (First Frame)",
-    #     out_path=os.path.join(out_dir, "105_test.png"),
-    #     vmin=vmin,
-    #     vmax=vmax,
-    #     dpi=dpi,
-    # )
 
 
 if __name__ == "__main__":
