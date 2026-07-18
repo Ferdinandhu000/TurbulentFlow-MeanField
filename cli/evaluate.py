@@ -39,9 +39,8 @@ def main(config: Dict[str, Any]) -> None:
         seed: int = int(config['dataset'].get('seed', 0))
         print(f"\n[*] evaluate.py: Using fixed sensor positions from {sensor_position_path}.")
     else:
-        import random
-        seed = random.randint(0, 1000000)
-        print(f"\n[*] evaluate.py: Forcing random seed {seed} to randomly select Test sensors.")
+        seed = int(config['dataset'].get('seed', 1))
+        print(f"\n[*] evaluate.py: Using dynamically generated sensor positions with seed {seed}.")
 
     write_to_disk: bool                         = True
     n_dropout_sensors: int                      = int(config['evaluate']['n_dropout_sensors'])

@@ -2,10 +2,10 @@ architecture:
   blur_kernel_size: 0
   blur_sigma: 0
   embedding_dim: 64
-  is_cross_attn: true
+  is_cross_attn: false
   mean_field_hidden: 32
   mean_field_time_embed_dim: 32
-  momdel_name: flronet-transolver
+  momdel_name: afno
   n_channels: 1
   n_fno_layers: 4
   n_hmodes: 32
@@ -17,7 +17,7 @@ architecture:
   n_wmodes: 64
   slice_num: 64
   trans_dropout: 0.0
-  use_mean_field: operator
+  use_mean_field: none
 dataset:
   dropout_probabilities:
   - 0.05
@@ -35,7 +35,7 @@ dataset:
   - 20
   n_fullstate_timeframes_per_chunk: 1
   n_samplings_per_chunk: 1
-  n_sensors: 196
+  n_sensors: 128
   resolution:
   - 48
   - 128
@@ -43,9 +43,9 @@ dataset:
   sensor_generator: LHS
   write_to_disk: true
 evaluate:
-  from_checkpoint: d:\hj\Y-2 S-1\Programming Project\FlowNet-NEW\TurbulentFlow-MeanField\Turbulent-20260709-addeddata\checkpoints_best\.checkpoints_25-T-CATO-trans-196\flronettransolver90.pt
+  from_checkpoint: d:\hj\Y-2 S-1\Programming Project\FlowNet-NEW\TurbulentFlow-MeanField\checkpoints_best\.checkpoints_02-T-AFNO_inside_config\afno17.pt
   init_fullstate_timeframes:
-  - 17
+  - 12
   is_generate_plots: false
   is_load_sensor_pos: false
   n_dropout_sensors: 0
