@@ -324,14 +324,37 @@ def _resolve_config_path(path_str: str) -> Path:
         return path.resolve()
     return (Path(ROOT_DIR) / path).resolve()
 
+def _iter_yaml_files(config_dir: Path) -> List[Path]:
+    yaml_files = list(config_dir.glob('*.yaml')) + list(config_dir.glob('*.yml'))
+    return sorted(yaml_files, key=lambda p: p.name)
+
+
 if __name__ == "__main__":
     # Initialize the argument parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, required=True, help='Configuration file name.')
+    parser.add_argument('--config', type=str, required=False, default=None, help='Configuration file name.')
+    parser.add_argument('--config-dir', type=str, default='yaml_T_A', help='Directory that contains YAML configs for batch training.')
     args: argparse.Namespace = parser.parse_args()
 
-    config_path = _resolve_config_path(args.config)
-    config = _load_config(config_path)
-    checkpoint_dir = f'.checkpoints_{config_path.stem}'
-    logfile = str(Path('.logs') / config_path.stem)
-    main(config=config, checkpoint_path=checkpoint_dir, logfile=logfile)
+    if args.config is not None:
+        config_path = _resolve_config_path(args.config)
+        config = _load_config(config_path)
+        checkpoint_dir = f'.checkpoints_{config_path.stem}'
+        logfile = str(Path('.logs') / config_path.stem)
+        main(config=config, checkpoint_path=checkpoint_dir, logfile=logfile)
+    else:
+        config_dir = _resolve_config_path(args.config_dir)
+        yaml_files = _iter_yaml_files(config_dir)
+        if not yaml_files:
+            raise FileNotFoundError(f'No YAML files found in {config_dir}')
+
+        print(f'Found {len(yaml_files)} config(s) in {config_dir}')
+        for idx, config_path in enumerate(yaml_files, start=1):
+            print(f'[{idx}/{len(yaml_files)}] Training with {config_path.name}')
+            _cleanup_tensors()
+            config = _load_config(config_path)
+            config.setdefault('dataset', {})
+            config['dataset']['write_to_disk'] = True
+            checkpoint_dir = f'.checkpoints_{config_path.stem}'
+            logfile = str(Path('.logs') / config_path.stem)
+            main(config=config, checkpoint_path=checkpoint_dir, logfile=logfile)
