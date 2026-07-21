@@ -19,11 +19,10 @@ def plot_frame(frame, vmin, vmax, out_path):
     """
     Saves a clean transparent flow field visualization.
     """
-    h, w = frame.shape[-2:]
-    figwidth = 18 / 25.4 # standard width
-    aspect_ratio = h / w
+    figwidth = 20 / 25.4
+    figheight = 5 / 25.4
     
-    fig, ax = plt.subplots(1, 1, figsize=(figwidth, figwidth * aspect_ratio))
+    fig, ax = plt.subplots(1, 1, figsize=(figwidth, figheight))
     ax.imshow(
         frame,
         origin="lower",
@@ -46,7 +45,7 @@ def main():
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
-    checkpoint_path = os.path.join(PROJECT_DIR, config['evaluate']['from_checkpoint'])
+    checkpoint_path = os.path.join(PROJECT_DIR, "checkpoints_best/.checkpoints_06-T-mean-operator_CATO_trans_inside_config/flronettransolver86.pt")
     print(f"Loading checkpoint from: {checkpoint_path}")
 
     # Load model
@@ -87,7 +86,7 @@ def main():
     # We want to collect outputs for target frames 100 to 120.
     # Chunk 100 covers target frames 100 to 119.
     # Chunk 101 covers target frames 101 to 120.
-    chunks_to_run = [100, 101]
+    chunks_to_run = [100]
     
     plots_root = os.path.join(PROJECT_DIR, "plots_fusing")
     os.makedirs(plots_root, exist_ok=True)
